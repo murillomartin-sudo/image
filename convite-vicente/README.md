@@ -8,12 +8,14 @@ Vertical 4:5 · 1122×1402 px (resolução nativa da arte) · 15 s · sem áudio
 | Caminho | O que é |
 |---|---|
 | `index.html` | Prévia da animação com play/pausa, reiniciar e linha do tempo |
-| `output/convite-vicente.mp4` | Vídeo final (H.264, 30 fps, 1122×1402) |
+| `output/convite-vicente-com-som.mp4` | Vídeo final **com música e efeitos sonoros** (H.264 + AAC 256 kbps) |
+| `output/convite-vicente.mp4` | Vídeo final sem áudio (H.264, 30 fps, 1122×1402) |
 | `output/convite-vicente.gif` | GIF animado (480 px de largura, 12 fps, em loop) |
 | `assets/original.png` | Arte original |
 | `assets/layers/` | Camadas recortadas (PNG com transparência), fundo limpo, névoa e textura da cachoeira |
 | `export/render.mjs` | Exportador: renderiza quadro a quadro e gera o MP4 e o GIF |
-| `tools/` | Scripts Python que separaram a arte em camadas |
+| `assets/audio/soundtrack.wav` | Trilha sonora (música + efeitos), 48 kHz estéreo, 15 s |
+| `tools/` | Scripts Python: separação em camadas (`segment.py`, `refine.py`, `build_layers.py`) e trilha (`make_audio.py`) |
 
 ## Ver a prévia
 
@@ -44,3 +46,14 @@ O último quadro é renderizado exatamente em t = 15 s e é **idêntico pixel a 
 | 6,4 s | "Esperamos você!" aparece em fade |
 | 7–14,3 s | Composição completa com ambiente vivo: dinossauros mexendo a cabeça, pterossauro batendo as asas, folhas, névoa, cachoeira e parallax de câmera |
 | 14,3–15 s | Tudo se acomoda; o último quadro é idêntico à arte original |
+
+## Trilha sonora
+
+Gerada 100% por síntese em `tools/make_audio.py` (sem samples nem músicas de terceiros, livre de direitos autorais):
+
+- **Música original de aventura** (Ré dórico, 120 bpm): tambores tribais e taiko, chocalho, baixo em ostinato, marimba, pad e um tema heroico de metais a partir da data. Termina com um rufar e um acorde final aos 14 s.
+- **Efeitos sincronizados**: queda e impacto do logo, "whooshes" nas entradas, rugido do T-Rex, chamado do pescoço-longo, grunhido do Triceratops, asas e grito do pterossauro, batidas de madeira e rangido de cordas nas placas, farfalhar e "pops" no piquenique, brilho no "Esperamos você!".
+- **Ambiente**: floresta, pássaros, insetos e a cachoeira (à esquerda no estéreo).
+
+Para regerar a trilha e o vídeo com som: `python3 tools/make_audio.py && node export/render.mjs`.
+Na prévia (`index.html`), clique em **🔇 Som** para ativar o áudio sincronizado.

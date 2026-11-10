@@ -55,4 +55,11 @@ await run('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i'
   '-vf', `fps=${GIF_FPS},scale=${GIF_W}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=192:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle`,
   '-loop', '0', gif]);
 await rm(FRAMES, { recursive: true, force: true });
-console.log(`\nOK:\n  ${mp4}\n  ${gif}`);
+// soundtrack (tools/make_audio.py) → MP4 with sound
+const wav = join(ROOT, 'assets', 'audio', 'soundtrack.wav'), mp4s = join(OUT, 'convite-vicente-com-som.mp4');
+try {
+  await readFile(wav);
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp4, '-i', wav, '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
+    '-c:a', 'aac', '-b:a', '256k', '-shortest', '-movflags', '+faststart', mp4s]);
+  console.log(`\nOK:\n  ${mp4}\n  ${mp4s}\n  ${gif}`);
+} catch { console.log(`\nOK (sem trilha):\n  ${mp4}\n  ${gif}`); }

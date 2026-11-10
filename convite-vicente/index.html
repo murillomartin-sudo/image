@@ -42,9 +42,11 @@
 <div id="controls">
   <button id="play" type="button">❚❚ Pausar</button>
   <button id="restart" type="button">↺ Reiniciar</button>
+  <button id="sound" type="button">🔇 Som</button>
   <input id="scrub" type="range" min="0" max="15" step="0.001" value="0" aria-label="Linha do tempo">
   <span id="time">0.00 / 15.00s</span>
 </div>
+<audio id="audio" src="assets/audio/soundtrack.wav" preload="auto"></audio>
 <p class="hint">Prévia em tempo real. Para gerar o MP4 e o GIF: <code>node export/render.mjs</code> (veja README).</p>
 
 <!-- SVG filters: wind sway for foliage (displacement oscillates around 0 → final frame is untouched) -->
@@ -230,15 +232,25 @@
   const playBtn = document.getElementById('play'), scrub = document.getElementById('scrub'), time = document.getElementById('time');
   let playing = true, t0 = performance.now(), cur = 0;
   function frame(now) {
-    if (playing) { cur = (now - t0) / 1000; if (cur > DURATION + 1.5) { t0 = now; cur = 0; } }   // loop with 1.5s hold
+    if (playing) { cur = (now - t0) / 1000; if (cur > DURATION + 1.5) { t0 = now; cur = 0; syncAudio(); } }   // loop with 1.5s hold
+    if (soundOn && playing && cur <= DURATION && Math.abs(audio.currentTime - cur) > 0.12) audio.currentTime = cur;
     const t = render(cur);
     scrub.value = t; time.textContent = `${t.toFixed(2)} / ${DURATION.toFixed(2)}s`;
     requestAnimationFrame(frame);
   }
+  // soundtrack (browsers only allow audio after a click, so sound starts muted)
+  const audio = document.getElementById('audio'), soundBtn = document.getElementById('sound');
+  let soundOn = false;
+  function syncAudio() {
+    if (!soundOn || !playing || cur > DURATION) { audio.pause(); return; }
+    audio.currentTime = cur; audio.play().catch(() => {});
+  }
+  soundBtn.onclick = () => { soundOn = !soundOn; soundBtn.textContent = soundOn ? '🔊 Som' : '🔇 Som';
+    if (soundOn) { cur = 0; t0 = performance.now(); } syncAudio(); };
   playBtn.onclick = () => { playing = !playing; if (playing) t0 = performance.now() - cur * 1000;
-    playBtn.textContent = playing ? '❚❚ Pausar' : '▶ Reproduzir'; };
-  document.getElementById('restart').onclick = () => { cur = 0; t0 = performance.now(); };
-  scrub.oninput = () => { cur = +scrub.value; t0 = performance.now() - cur * 1000; };
+    playBtn.textContent = playing ? '❚❚ Pausar' : '▶ Reproduzir'; syncAudio(); };
+  document.getElementById('restart').onclick = () => { cur = 0; t0 = performance.now(); syncAudio(); };
+  scrub.oninput = () => { cur = +scrub.value; t0 = performance.now() - cur * 1000; syncAudio(); };
   window.__ready.then(() => { t0 = performance.now(); requestAnimationFrame(frame); });
 })();
 </script>
