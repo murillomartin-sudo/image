@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convite Vicente — Piquenique Jurássico</title>
+<style>
+  :root { --bg:#14110d; --ui:#f4ead7; --accent:#e9a23b; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ui);
+    font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; }
+  #viewport { position:relative; overflow:hidden; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.55); }
+  #stage { position:absolute; left:0; top:0; width:1122px; height:1402px; overflow:hidden; transform-origin:0 0; background:#cfd9c8; }
+  #cam { position:absolute; inset:0; transform-origin:50% 42%; }
+  .layer { position:absolute; will-change:transform,opacity; }
+  .layer > .par, .layer .anim, .layer .amb { position:absolute; inset:0; }
+  .layer img { position:absolute; left:0; top:0; width:100%; height:100%; display:block; user-select:none; -webkit-user-drag:none; }
+  .mist { position:absolute; inset:-40px; background-repeat:repeat-x; background-size:2244px 1402px; pointer-events:none; opacity:0; }
+  #haze { position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 66% 62% at 50% 56%, rgba(236,242,238,.92) 0%, rgba(232,240,234,.75) 45%, rgba(230,238,232,0) 78%); }
+  #streaks { position:absolute; left:178px; top:728px; width:112px; height:250px; pointer-events:none;
+    background:url(assets/layers/streaks.png) repeat-y; background-size:112px 600px; mix-blend-mode:screen; opacity:0;
+    clip-path:polygon(14% 0, 84% 0, 92% 70%, 100% 100%, 0 100%, 8% 70%);
+    -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 12%, #000 80%, transparent 100%);
+            mask-image:linear-gradient(to bottom, transparent 0, #000 12%, #000 80%, transparent 100%); }
+  #final { position:absolute; inset:0; opacity:0; pointer-events:none; }
+  #final img { width:100%; height:100%; display:block; }
+  #controls { display:flex; align-items:center; gap:10px; width:min(560px,100%); }
+  #controls button { background:#2a231b; color:var(--ui); border:1px solid #4a3d2e; border-radius:8px; padding:8px 12px; cursor:pointer; font:inherit; }
+  #controls button:hover { border-color:var(--accent); }
+  #scrub { flex:1; accent-color:var(--accent); }
+  #time { font-variant-numeric:tabular-nums; min-width:92px; text-align:right; opacity:.8; }
+  .hint { opacity:.55; font-size:12px; text-align:center; max-width:560px; }
+  body.export { padding:0; background:#000; display:block; }
+  body.export #viewport { border-radius:0; box-shadow:none; }
+  body.export #controls, body.export .hint { display:none; }
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage"><div id="cam"></div><div id="final"><img src="assets/original.png" alt=""></div></div></div>
+<div id="controls">
+  <button id="play" type="button">❚❚ Pausar</button>
+  <button id="restart" type="button">↺ Reiniciar</button>
+  <input id="scrub" type="range" min="0" max="15" step="0.001" value="0" aria-label="Linha do tempo">
+  <span id="time">0.00 / 15.00s</span>
+</div>
+<p class="hint">Prévia em tempo real. Para gerar o MP4 e o GIF: <code>node export/render.mjs</code> (veja README).</p>
+
+<!-- SVG filters: wind sway for foliage (displacement oscillates around 0 → final frame is untouched) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="swayA" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.011" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="swayB" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.006" numOctaves="2" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="swayC" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.008" numOctaves="2" seed="21" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="swayD" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.007 0.01" numOctaves="2" seed="33" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="water" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06 0.012" numOctaves="2" seed="2" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<script src="lib/gsap.min.js"></script>
+<script>
+(() => {
+  const DURATION = 15;
+  // Layer geometry (generated by tools/build_layers.py → assets/layers/layers.json)
+  const G = {"ptero":[0,51,340,224],"trice":[809,55,313,346],"brachio":[0,530,294,500],"trex":[760,559,362,605],
+    "logo":[293,10,530,390],"sign1":[112,358,883,225],"sign2":[265,526,545,343],"sign3":[277,845,515,146],
+    "sign4":[261,975,620,220],"picnicL":[0,985,357,372],"eggs":[840,1143,261,207],"stone":[292,1182,546,165],
+    "plate":[0,0,1122,1402],"foliageTL":[0,0,351,761],"foliageTR":[604,0,518,664],"foliageBL":[0,1198,367,204],
+    "foliageBR":[724,1012,398,390],"waterfall":[160,705,151,296]};
+  // z-order, back → front. depth = parallax factor.
+  const ORDER = [
+    ['plate',0.25,'jpg'], ['waterfall',0.3], ['#streaks',0.3], ['#mistBack',0.35],
+    ['foliageTL',0.45], ['foliageTR',0.45],
+    ['ptero',0.6], ['trice',0.7], ['brachio',0.8], ['trex',0.85], ['#mistMid',0.6], ['#haze',0.5],
+    ['sign1',1], ['logo',1], ['sign2',1], ['sign3',1], ['sign4',1], ['stone',1.05],
+    ['picnicL',1.25], ['eggs',1.25], ['foliageBL',1.4], ['foliageBR',1.4], ['#mistFront',1.2]
+  ];
+  const cam = document.getElementById('cam');
+  const L = {};      // name → {el, par, anim, amb, depth}
+  for (const [name, depth, ext] of ORDER) {
+    let el, par, anim, amb;
+    if (name.startsWith('#')) {
+      const id = name.slice(1);
+      if (id === 'streaks') { el = document.createElement('div'); el.id = 'streaks'; }
+      else if (id === 'haze') { el = document.createElement('div'); el.id = 'haze'; }
+      else { el = document.createElement('div'); el.className = 'mist'; el.id = id;
+        el.style.backgroundImage = `url(assets/layers/${id === 'mistBack' ? 'mist2' : 'mist1'}.png)`; }
+      cam.appendChild(el); L[id] = { el, par: el, anim: el, amb: el, depth };
+      continue;
+    }
+    const [x, y, w, h] = G[name];
+    el = document.createElement('div'); el.className = 'layer'; el.id = 'L-' + name;
+    Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    par = document.createElement('div'); par.className = 'par';
+    anim = document.createElement('div'); anim.className = 'anim';
+    amb = document.createElement('div'); amb.className = 'amb';
+    const img = new Image(); img.src = `assets/layers/${name}.${ext || 'png'}`; img.alt = ''; img.decoding = 'sync';
+    amb.appendChild(img); anim.appendChild(amb); par.appendChild(anim); el.appendChild(par); cam.appendChild(el);
+    L[name] = { el, par, anim, amb, img, depth };
+  }
+  const swayIds = { foliageTL: 'swayA', foliageTR: 'swayB', foliageBL: 'swayC', foliageBR: 'swayD', waterfall: 'water' };
+  for (const [n, f] of Object.entries(swayIds)) L[n].img.style.filter = `url(#${f})`;
+  const disp = Object.fromEntries(Object.entries(swayIds).map(([n, f]) =>
+    [n, document.querySelector(`#${f} feDisplacementMap`)]));
+
+  // pivots for subtle "head" motion (rotation around neck/body base)
+  gsap.set(L.trex.anim, { transformOrigin: '38% 78%' });     gsap.set(L.trex.amb, { transformOrigin: '38% 82%' });
+  gsap.set(L.brachio.anim, { transformOrigin: '30% 100%' }); gsap.set(L.brachio.amb, { transformOrigin: '30% 100%' });
+  gsap.set(L.trice.anim, { transformOrigin: '75% 95%' });    gsap.set(L.trice.amb, { transformOrigin: '75% 95%' });
+  gsap.set(L.ptero.anim, { transformOrigin: '55% 50%' });    gsap.set(L.ptero.amb, { transformOrigin: '58% 48%' });
+  gsap.set(L.logo.anim, { transformOrigin: '50% 40%' });
+  gsap.set(L.sign1.amb, { transformOrigin: '50% 0%' });
+  gsap.set(L.sign2.anim, { transformOrigin: '50% 50%' });
+  gsap.set(L.sign3.amb, { transformOrigin: '50% 0%' });
+
+  // ───────────── Master timeline (all entrances) ─────────────
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.inOut' } });
+  // Scene 1 — 0–3s: forest wakes, logo descends
+  tl.fromTo(cam, { scale: 1.06 }, { scale: 1, duration: 12, ease: 'sine.inOut' }, 0);
+  tl.fromTo(L.mistFront.el, { opacity: 0.92 }, { opacity: 0, duration: 3.2, ease: 'sine.inOut' }, 1.4);
+  tl.fromTo(L.mistBack.el, { opacity: 0.55 }, { opacity: 0.32, duration: 4, ease: 'sine.inOut' }, 0);
+  tl.fromTo(L.mistMid.el, { opacity: 0.7 }, { opacity: 0.38, duration: 5, ease: 'sine.inOut' }, 0);
+  tl.fromTo(L.haze.el, { opacity: 1 }, { opacity: 0.55, duration: 5, ease: 'sine.inOut' }, 0);
+  tl.fromTo('#streaks', { opacity: 0 }, { opacity: 0.38, duration: 2, ease: 'sine.inOut' }, 0.2);
+  tl.fromTo(L.logo.anim, { y: -470, scale: 0.86 },
+    { y: 0, scale: 1, duration: 2.3, ease: 'power3.out' }, 0.6);
+  tl.fromTo(L.logo.anim, { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'sine.out' }, 0.6);
+
+  // Scene 2 — 3–5s: dinosaurs
+  tl.fromTo(L.trex.anim, { x: 300, opacity: 0, rotation: 3 },
+    { x: 0, opacity: 1, rotation: 0, duration: 1.9, ease: 'power3.out' }, 3.0);
+  tl.fromTo(L.brachio.anim, { x: -260, opacity: 0, rotation: -4 },
+    { x: 0, opacity: 1, rotation: 0, duration: 2.0, ease: 'power3.out' }, 3.2);
+  tl.fromTo(L.trice.anim, { x: 200, y: -50, opacity: 0, rotation: 2.5 },
+    { x: 0, y: 0, opacity: 1, rotation: 0, duration: 1.8, ease: 'power3.out' }, 3.45);
+  tl.fromTo(L.ptero.anim, { x: -380, y: 60, opacity: 0, rotation: -8 },
+    { x: 0, y: 0, opacity: 1, rotation: 0, duration: 1.9, ease: 'power2.out' }, 3.3);
+
+  // Scene 3 — 5–7s: invitation plank drops (pendulum handled in ambient())
+  tl.fromTo(L.sign1.anim, { y: -210, opacity: 0 }, { y: 0, duration: 1.5, ease: 'power3.out' }, 5.0);
+  tl.to(L.sign1.anim, { opacity: 1, duration: 0.6, ease: 'sine.out' }, 5.0);
+
+  // Scene 4 — 7–10s: date & time
+  tl.fromTo(L.sign2.anim, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.4, ease: 'power3.out' }, 7.0);
+  tl.fromTo(L.sign3.anim, { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 1.3, ease: 'power3.out' }, 8.3);
+
+  // Scene 5 — 10–12s: address + picnic foreground
+  tl.fromTo(L.sign4.anim, { y: 170, opacity: 0 }, { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out' }, 10.0);
+  tl.fromTo(L.picnicL.anim, { x: -45, y: 30, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 1.5, ease: 'power2.out' }, 10.4);
+  tl.fromTo(L.eggs.anim, { x: 45, y: 30, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 1.5, ease: 'power2.out' }, 10.6);
+
+  // Scene 6 — 12–15s: final message, atmosphere settles to the exact original
+  tl.fromTo(L.stone.anim, { opacity: 0 }, { opacity: 1, duration: 1.3, ease: 'sine.inOut' }, 12.0);
+  tl.to([L.mistBack.el, L.mistMid.el], { opacity: 0, duration: 2.2, ease: 'sine.inOut' }, 11.8);
+  tl.to(L.haze.el, { opacity: 0, duration: 3.5, ease: 'sine.inOut' }, 9.5);
+  tl.to('#streaks', { opacity: 0, duration: 1.2, ease: 'sine.inOut' }, 13.4);
+  tl.fromTo('#final', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'none' }, 14.3); // guarantees last frame == original
+  tl.set({}, {}, DURATION);
+
+  // ───────────── Ambient motion (pure function of t) ─────────────
+  const TAU = Math.PI * 2;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const smooth = (e0, e1, x) => { const u = clamp((x - e0) / (e1 - e0), 0, 1); return u * u * (3 - 2 * u); };
+  // global envelope: ambient motion breathes in, then dies out before the end so the last frames are still
+  const tail = t => 1 - smooth(13.4, 14.5, t);
+  const pend = (u, A, f, d) => u <= 0 ? 0 : A * Math.exp(-d * u) * Math.sin(TAU * f * u + 0.6);
+
+  function ambient(t) {
+    const T = tail(t);
+    // camera parallax drift (−14px → 0) plus a tiny late float, all layers by depth
+    const camX = -14 * (1 - smooth(0, 12, t)) + 3 * Math.sin(TAU * 0.12 * t) * smooth(11.5, 12.5, t) * T;
+    const camY = -6 * (1 - smooth(0, 12, t));
+    for (const k in L) { const o = L[k]; const d = o.depth - 0.25;
+      gsap.set(o.par === o.el ? o.el : o.par, { x: camX * d, y: camY * d, force3D: true }); }
+    // foliage breeze (displacement oscillates around zero)
+    const ws = s => s * T;
+    disp.foliageTL.setAttribute('scale', ws(7 * Math.sin(TAU * 0.33 * t)).toFixed(3));
+    disp.foliageTR.setAttribute('scale', ws(7 * Math.sin(TAU * 0.29 * t + 1.3)).toFixed(3));
+    disp.foliageBL.setAttribute('scale', ws(6 * Math.sin(TAU * 0.37 * t + 2.1)).toFixed(3));
+    disp.foliageBR.setAttribute('scale', ws(6 * Math.sin(TAU * 0.31 * t + 0.4)).toFixed(3));
+    disp.waterfall.setAttribute('scale', ws(4 * Math.sin(TAU * 1.7 * t)).toFixed(3));
+    document.getElementById('streaks').style.backgroundPosition = `0px ${(t * 140) % 600}px`;
+    // mist drift
+    L.mistBack.el.style.backgroundPosition = `${(t * 9) % 2244}px 0px`;
+    L.mistMid.el.style.backgroundPosition = `${-(t * 15) % 2244}px 30px`;
+    L.mistFront.el.style.backgroundPosition = `${(t * 24) % 2244}px -60px`;
+    // dinosaurs — subtle head/body motion once they have arrived
+    const tr = smooth(4.4, 5.6, t) * T, br = smooth(4.6, 5.8, t) * T, ce = smooth(4.8, 6.0, t) * T, pt = smooth(4.6, 5.6, t) * T;
+    gsap.set(L.trex.amb, { rotation: 0.9 * Math.sin(TAU * 0.21 * (t - 4.4)) * tr, scaleY: 1 + 0.006 * Math.sin(TAU * 0.34 * t) * tr });
+    gsap.set(L.brachio.amb, { rotation: -0.9 * Math.sin(TAU * 0.17 * (t - 4.6)) * br });
+    gsap.set(L.trice.amb, { rotation: 0.7 * Math.sin(TAU * 0.19 * (t - 4.8)) * ce });
+    // pterosaur: wing beats while flying in, then a gentle hover
+    const flapIn = 1 - smooth(4.6, 5.4, t);
+    const flapAmt = t < 3.3 ? 0 : 0.07 * flapIn + 0.022 * pt;
+    const flapPhase = t < 5 ? TAU * 1.8 * t : TAU * 1.8 * 5 + TAU * 0.8 * (t - 5);   // fast beats in flight, slow glide after
+    gsap.set(L.ptero.amb, { scaleY: 1 - flapAmt * (0.5 + 0.5 * Math.sin(flapPhase)), y: 4 * Math.sin(TAU * 0.3 * (t - 4.6)) * pt });
+    // hanging planks: damped pendulum (settles long before the end)
+    gsap.set(L.sign1.amb, { rotation: pend(t - 5.0, 2.4, 0.55, 0.95) });
+    gsap.set(L.sign3.amb, { rotation: pend(t - 8.3, 1.1, 0.7, 1.3) });
+  }
+
+  // ───────────── Rendering / playback ─────────────
+  function render(t) { t = clamp(t, 0, DURATION); tl.seek(t, false); ambient(t); return t; }
+  window.__render = render;            // used by export/render.mjs
+  window.__duration = DURATION;
+  window.__ready = Promise.all([...document.images].map(i => i.decode ? i.decode().catch(() => {}) : null));
+
+  const isExport = new URLSearchParams(location.search).has('export');
+  const viewport = document.getElementById('viewport'), stage = document.getElementById('stage');
+  function fit() {
+    const s = isExport ? 1 : Math.min((innerWidth - 32) / 1122, (innerHeight - 110) / 1402, 1);
+    stage.style.transform = `scale(${s})`;
+    viewport.style.width = 1122 * s + 'px'; viewport.style.height = 1402 * s + 'px';
+  }
+  addEventListener('resize', fit); fit();
+  if (isExport) { document.body.classList.add('export'); render(0); return; }
+
+  const playBtn = document.getElementById('play'), scrub = document.getElementById('scrub'), time = document.getElementById('time');
+  let playing = true, t0 = performance.now(), cur = 0;
+  function frame(now) {
+    if (playing) { cur = (now - t0) / 1000; if (cur > DURATION + 1.5) { t0 = now; cur = 0; } }   // loop with 1.5s hold
+    const t = render(cur);
+    scrub.value = t; time.textContent = `${t.toFixed(2)} / ${DURATION.toFixed(2)}s`;
+    requestAnimationFrame(frame);
+  }
+  playBtn.onclick = () => { playing = !playing; if (playing) t0 = performance.now() - cur * 1000;
+    playBtn.textContent = playing ? '❚❚ Pausar' : '▶ Reproduzir'; };
+  document.getElementById('restart').onclick = () => { cur = 0; t0 = performance.now(); };
+  scrub.oninput = () => { cur = +scrub.value; t0 = performance.now() - cur * 1000; };
+  window.__ready.then(() => { t0 = performance.now(); requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>
