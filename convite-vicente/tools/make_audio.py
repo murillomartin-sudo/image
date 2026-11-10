@@ -1,11 +1,17 @@
 """Procedurally synthesizes the soundtrack (original adventure music + sound effects) synced to index.html.
-Output: assets/audio/soundtrack.wav (48 kHz stereo, 15 s). Everything is generated from scratch — no samples."""
+Profiles (argv[1]):
+  convite  (default) → assets/audio/soundtrack.wav, 15 s, synced to index.html
+  video2             → assets/audio/soundtrack-video2.wav, 12.4 s, synced to the adjusted uploaded video
+48 kHz stereo. Everything is generated from scratch — no samples."""
+import sys
+PROFILE = sys.argv[1] if len(sys.argv) > 1 else 'convite'
 import numpy as np, os
 from scipy import signal
 from scipy.io import wavfile
 
 SR = 48000
-DUR = 15.0
+DUR = {"convite": 15.0, "video2": 12.4}[PROFILE]
+END = DUR - 1.0          # finale hit
 N = int(SR * DUR)
 rng = np.random.default_rng(42)
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'audio')
@@ -174,22 +180,22 @@ def sparkle(d=1.4):
 BPM = 120; B = 60 / BPM          # beat = 0.5 s
 M0 = 1.0                         # drums/groove start on the logo impact
 # chord progression (2 bars each, 8 beats = 4 s): Dm  Bb  C  Dm(sus)
-chords = [([50, 57, 62, 65], 0.0), ([46, 53, 58, 62], 4.0), ([48, 55, 60, 64], 8.0), ([50, 57, 62, 64], 12.0)]
+chords = [c for c in [([50, 57, 62, 65], 0.0), ([46, 53, 58, 62], 4.0), ([48, 55, 60, 64], 8.0), ([50, 57, 62, 64], 12.0)] if c[1] < END]
 for notes, t0 in chords:
-    seg_d = 4.2 if t0 < 12 else 3.0
+    seg_d = min(4.2, DUR - t0)
     add(music, pad([n + 12 for n in notes[1:]], seg_d), t0, 0.16, -0.3)
     add(music, pad(notes, seg_d), t0, 0.12, 0.3)
 roots = {0: 38, 4: 34, 8: 36, 12: 38}
 # bass ostinato (8ths "da-da-DUM") from the groove start
 t = M0
-while t < 14.0:
-    r = roots[int(t // 4) * 4 if t < 12 else 12]
+while t < END:
+    r = roots.get(int(t // 4) * 4, 38)
     for k, (dt, dn) in enumerate([(0, 0), (0.25, 0), (0.5, 7), (0.75, 12)]):
         add(music, bass(r + dn, 0.24), t + dt, 0.28 if k == 0 else 0.18)
     t += 1.0
 # tribal drums on an 8th-note grid
 step = 0
-while M0 + step * B / 2 < 14.0:
+while M0 + step * B / 2 < END:
     t = M0 + step * B / 2; beat = step % 8
     if beat in (0, 3, 6): add(music, tom(68, 0.5), t, 0.55, -0.2)
     if beat in (2, 5, 7): add(music, tom(98, 0.35, 0.4), t, 0.35, 0.35)
@@ -197,14 +203,14 @@ while M0 + step * B / 2 < 14.0:
     step += 1
 # shaker on 16ths with accent
 k = 0
-while M0 + k * B / 4 < 14.0:
+while M0 + k * B / 4 < END:
     add(music, shaker(), M0 + k * B / 4, 0.09 if k % 2 == 0 else 0.045, 0.5)
     k += 1
 # marimba ostinato (original pattern) over the chords
 pat = [0, 7, 12, 10, 7, 12, 14, 12]
 k = 0
-while M0 + k * B / 2 < 13.9:
-    tk = M0 + k * B / 2; r = roots[int(tk // 4) * 4 if tk < 12 else 12] + 24
+while M0 + k * B / 2 < END - 0.1:
+    tk = M0 + k * B / 2; r = roots.get(int(tk // 4) * 4, 38) + 24
     add(music, marimba(r + pat[k % 8] + 12, 0.6), tk, 0.13, 0.4 * np.sin(k))
     k += 1
 # heroic brass theme (original melody) from the reveal of the date until the finale
@@ -213,51 +219,64 @@ theme = [  # (beat offset, midi, beats)
     (8, 69, 1.5), (9.5, 72, 0.5), (10, 74, 3), (13, 72, 1),
     (14, 70, 1.5), (15.5, 69, 0.5), (16, 67, 2), (18, 72, 1), (19, 69, 1),
 ]
-T0 = 3.8
+T0 = 3.8 if PROFILE == "convite" else 2.0
 for off, n, ln in theme:
     ts = T0 + off * B
-    if ts > 13.5: break
+    if ts > END - 0.5: break
     add(music, brass(n, ln * B + 0.05), ts, 0.16, -0.15)
     add(music, brass(n - 12, ln * B + 0.05), ts, 0.10, 0.15)
 # finale: big Dm chord + taiko roll + cymbal-ish swell
-for i in range(8): add(music, tom(60 + i * 2, 0.4), 13.0 + i * 0.125, 0.25 + i * 0.03)
-add(music, taiko(1.8), 14.0, 0.9)
+for i in range(8): add(music, tom(60 + i * 2, 0.4), END - 1.0 + i * 0.125, 0.25 + i * 0.03)
+add(music, taiko(1.8), END, 0.9)
 fin = sum(brass(n, 1.0, vib=False) for n in [50, 57, 62, 65, 69]) / 3
-add(music, fin, 14.0, 0.35)
-add(music, pad([62, 65, 69, 74], 1.0), 14.0, 0.2)
+add(music, fin, END, 0.35)
+add(music, pad([62, 65, 69, 74], 1.0), END, 0.2)
 swell = hp(noise(1.2), 4000) * np.linspace(0, 1, int(SR * 1.2)) ** 2
-add(music, swell, 12.8, 0.12)
+add(music, swell, END - 1.2, 0.12)
 
 # ───────────────────────── SFX timeline (matches index.html) ─────────────────────────
-add(sfx, whoosh(0.9, 300, 1800, rev=True), 0.3, 0.35)          # logo falls
-add(sfx, boom(), 0.95, 0.55)                                     # logo impact
-add(sfx, whoosh(0.7, 500, 2600), 1.25, 0.32, 0.7)                # T-Rex enters (right)
-add(sfx, roar(1.7), 1.55, 0.75, 0.55)                            # T-Rex roar
-add(sfx, whoosh(0.7, 400, 2200), 1.45, 0.28, -0.7)               # long-neck enters (left)
-add(sfx, call(1.1, 140, 0.7), 2.2, 0.35, -0.6)                   # long-neck call
-for i in range(6): add(sfx, flap(), 1.6 + i * 0.22, 0.35, -0.8 + i * 0.08)   # pterosaur wings
-add(sfx, screech(0.75), 2.35, 0.32, -0.5)
-add(sfx, whoosh(0.6, 500, 2400), 1.65, 0.25, 0.8)                # triceratops
-add(sfx, grunt(0.6), 2.45, 0.6, 0.7)
-add(sfx, whoosh(0.5, 2200, 500), 2.85, 0.3)                      # invitation plank drops
-add(sfx, wood_thunk(0.5, 170), 3.3, 0.55)
-add(sfx, creak(1.0, 95), 3.4, 0.12, -0.3); add(sfx, creak(0.8, 120), 3.9, 0.09, 0.3)
-add(sfx, pop(0.2, 420), 3.82, 0.3); add(sfx, wood_thunk(0.45, 210), 3.95, 0.45)   # date pops
-add(sfx, whoosh(0.4, 600, 2000), 4.35, 0.2); add(sfx, wood_thunk(0.4, 240), 4.7, 0.4)  # time
-add(sfx, whoosh(0.55, 400, 2400), 5.05, 0.28); add(sfx, wood_thunk(0.5, 160), 5.5, 0.5)  # address
-add(sfx, rustle(0.5), 5.5, 0.35, -0.7); add(sfx, pop(0.16, 700), 5.75, 0.22, -0.6)   # picnic
-add(sfx, rustle(0.45), 5.65, 0.3, 0.7); add(sfx, pop(0.16, 560), 5.9, 0.22, 0.7)     # eggs
-add(sfx, sparkle(1.5), 6.4, 0.28)                                # "Esperamos você!"
-add(sfx, roar(1.2, 110), 9.6, 0.28, 0.6)                         # distant ambient roar
-add(sfx, call(0.9, 160, 0.5), 11.4, 0.18, -0.6)
-for i in range(4): add(sfx, flap(0.25), 8.0 + i * 0.45, 0.14, -0.8)
+if PROFILE == "convite":
+    add(sfx, whoosh(0.9, 300, 1800, rev=True), 0.3, 0.35)          # logo falls
+    add(sfx, boom(), 0.95, 0.55)                                     # logo impact
+    add(sfx, whoosh(0.7, 500, 2600), 1.25, 0.32, 0.7)                # T-Rex enters (right)
+    add(sfx, roar(1.7), 1.55, 0.75, 0.55)                            # T-Rex roar
+    add(sfx, whoosh(0.7, 400, 2200), 1.45, 0.28, -0.7)               # long-neck enters (left)
+    add(sfx, call(1.1, 140, 0.7), 2.2, 0.35, -0.6)                   # long-neck call
+    for i in range(6): add(sfx, flap(), 1.6 + i * 0.22, 0.35, -0.8 + i * 0.08)   # pterosaur wings
+    add(sfx, screech(0.75), 2.35, 0.32, -0.5)
+    add(sfx, whoosh(0.6, 500, 2400), 1.65, 0.25, 0.8)                # triceratops
+    add(sfx, grunt(0.6), 2.45, 0.6, 0.7)
+    add(sfx, whoosh(0.5, 2200, 500), 2.85, 0.3)                      # invitation plank drops
+    add(sfx, wood_thunk(0.5, 170), 3.3, 0.55)
+    add(sfx, creak(1.0, 95), 3.4, 0.12, -0.3); add(sfx, creak(0.8, 120), 3.9, 0.09, 0.3)
+    add(sfx, pop(0.2, 420), 3.82, 0.3); add(sfx, wood_thunk(0.45, 210), 3.95, 0.45)   # date pops
+    add(sfx, whoosh(0.4, 600, 2000), 4.35, 0.2); add(sfx, wood_thunk(0.4, 240), 4.7, 0.4)  # time
+    add(sfx, whoosh(0.55, 400, 2400), 5.05, 0.28); add(sfx, wood_thunk(0.5, 160), 5.5, 0.5)  # address
+    add(sfx, rustle(0.5), 5.5, 0.35, -0.7); add(sfx, pop(0.16, 700), 5.75, 0.22, -0.6)   # picnic
+    add(sfx, rustle(0.45), 5.65, 0.3, 0.7); add(sfx, pop(0.16, 560), 5.9, 0.22, 0.7)     # eggs
+    add(sfx, sparkle(1.5), 6.4, 0.28)                                # "Esperamos você!"
+    add(sfx, roar(1.2, 110), 9.6, 0.28, 0.6)                         # distant ambient roar
+    add(sfx, call(0.9, 160, 0.5), 11.4, 0.18, -0.6)
+    for i in range(4): add(sfx, flap(0.25), 8.0 + i * 0.45, 0.14, -0.8)
+else:  # video2: looping camera sway (3.1 s ping-pong cycle) — dinosaurs voice over the music
+    add(sfx, boom(), 0.15, 0.45)                                     # opening hit
+    add(sfx, roar(1.8), 0.5, 0.75, 0.6)                              # T-Rex (right)
+    add(sfx, grunt(0.6), 2.0, 0.6, 0.7)                              # triceratops (top right)
+    for i in range(5): add(sfx, flap(), 2.6 + i * 0.22, 0.3, -0.8 + i * 0.06)   # pterosaur (left)
+    add(sfx, screech(0.75), 3.0, 0.3, -0.6)
+    add(sfx, call(1.2, 140, 0.7), 4.3, 0.38, -0.6)                   # long-neck (left)
+    for i, tS in enumerate([5.7, 6.35, 7.0]): add(sfx, boom(1.0), tS, 0.32 + 0.06 * i)   # heavy footsteps
+    add(sfx, roar(1.3, 110), 7.4, 0.55, 0.6)
+    add(sfx, grunt(0.5, 95), 8.6, 0.45, -0.4)                        # raptor eye (bottom left)
+    add(sfx, call(0.9, 160, 0.5), 9.6, 0.22, -0.6)
+    add(sfx, sparkle(1.4), END - 0.4, 0.3)                           # "Te esperamos"
 
 # ───────────────────────── jungle ambience ─────────────────────────
 pink = lp(rng.standard_normal(N), 1800); amb[:, 0] += pink * 0.05; amb[:, 1] += np.roll(pink, 999) * 0.05
 water = bp(rng.standard_normal(N), 300, 6000) * 0.035
 amb[:, 0] += water * 1.2; amb[:, 1] += water * 0.6                                 # waterfall sits left
 for _ in range(16):
-    t0 = rng.uniform(0.2, 14.0); b = bird(rng.uniform(0.12, 0.3))
+    t0 = rng.uniform(0.2, END); b = bird(rng.uniform(0.12, 0.3))
     for k in range(rng.integers(1, 4)): add(amb, b, t0 + k * 0.16, 0.05, rng.uniform(-0.9, 0.9))
 # insects (high pulsed tone)
 ti = np.arange(N) / SR
@@ -272,11 +291,12 @@ def reverb(x, d=1.8, mix=0.18):
     return x * (1 - mix) + wet * mix
 music = reverb(music, 2.2, 0.22); sfx = reverb(sfx, 1.4, 0.14)
 # duck the music slightly under the big roar
-duck = np.ones(N); i0, i1 = int(1.5 * SR), int(3.2 * SR); duck[i0:i1] = 0.7
+duck = np.ones(N)
+for a0, a1 in ([(1.5, 3.2)] if PROFILE == 'convite' else [(0.5, 2.2), (7.4, 8.6)]): duck[int(a0 * SR):int(a1 * SR)] = 0.7
 mix = music * duck[:, None] * 0.95 + sfx * 0.9 + amb
 mix[:, 0] = hp(mix[:, 0], 28); mix[:, 1] = hp(mix[:, 1], 28)
 fade_in = np.clip(np.arange(N) / (0.25 * SR), 0, 1); fade_out = np.clip((N - np.arange(N)) / (0.6 * SR), 0, 1)
 mix *= (fade_in * fade_out)[:, None]
 mix = np.tanh(mix / np.abs(mix).max() * 1.15) ; mix *= 0.89 / np.abs(mix).max()    # soft-clip, peak ≈ -1 dBFS
-wavfile.write(os.path.join(OUT, 'soundtrack.wav'), SR, (mix * 32767).astype(np.int16))
+wavfile.write(os.path.join(OUT, 'soundtrack.wav' if PROFILE == 'convite' else f'soundtrack-{PROFILE}.wav'), SR, (mix * 32767).astype(np.int16))
 print('ok', mix.shape, 'rms', np.sqrt((mix ** 2).mean()).round(3))

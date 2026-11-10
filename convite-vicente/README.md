@@ -57,3 +57,13 @@ Gerada 100% por síntese em `tools/make_audio.py` (sem samples nem músicas de t
 
 Para regerar a trilha e o vídeo com som: `python3 tools/make_audio.py && node export/render.mjs`.
 Na prévia (`index.html`), clique em **🔇 Som** para ativar o áudio sincronizado.
+
+## Vídeo 2 — convite "5 anos" ajustado
+
+`output/video2/convite-vicente-5anos-ajustado.mp4`: versão corrigida do vídeo enviado (`assets/video2/original.mp4`), 1080×1920, 30 fps, 12,4 s, com trilha.
+
+- **Problemas no original**: um trecho de 1,4 s repetido 7 vezes, com um "pulo" a cada emenda, quadros duplicados (engasgos), 720×1280 e codec HEVC.
+- **Correção**: um só ciclo, sem duplicados, em ida e volta (loop sem emenda), interpolação de movimento para 30 fps, ampliação para Full HD com leve nitidez e cor, e H.264 + AAC (compatível com WhatsApp e Instagram).
+- **Trilha** (`assets/audio/soundtrack-video2.wav`): a mesma música de aventura com efeitos de rugidos, Triceratops, pterossauro, pescoço-longo, passos pesados, raptor e brilho final.
+
+Para regerar: `python3 tools/make_audio.py video2 && python3 tools/adjust_video2.py`.
