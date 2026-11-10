@@ -32,13 +32,15 @@ node export/render.mjs --gif-width 600 --gif-fps 15
 
 O último quadro é renderizado exatamente em t = 15 s e é **idêntico pixel a pixel à arte original**.
 
-## Roteiro
+## Roteiro (ritmo ágil)
 
 | Tempo | Cena |
 |---|---|
-| 0–3 s | Floresta enevoada desperta: folhas balançam, a névoa se move, a cachoeira corre e o logo "VICENTE" desce com escala e desaceleração |
-| 3–5 s | T-Rex entra pela direita, o pescoço longo pela esquerda, o Triceratops no canto superior direito e o pterossauro voa pela esquerda batendo as asas |
-| 5–7 s | A placa "Você foi convidado…" desce de trás do logo e balança como um pêndulo amortecido |
-| 7–10 s | A placa "21 novembro" cresce de 90% a 100%, depois "14h30" sobe |
-| 10–12 s | A placa do endereço sobe; a cesta, a garrafa, as frutas, os biscoitos e os ovos aparecem com fade e deslocamento |
-| 12–15 s | "Esperamos você!" entra em fade; os movimentos ambientes desaceleram até a composição ficar igual à original |
+| 0–1,3 s | A névoa se abre rapidamente e o logo "VICENTE" cai com um leve "pop" (back-out) |
+| 1,3–2,8 s | T-Rex, pescoço longo, Triceratops e pterossauro entram rápido pelas laterais |
+| 2,9 s | A placa "Você foi convidado…" cai de trás do logo e balança nas cordas |
+| 3,8–4,9 s | "21 novembro" faz um pop de 90% → 100%; "14h30" sobe |
+| 5,1–6,3 s | O endereço sobe; a cesta, a garrafa, as frutas, os biscoitos e os ovos entram |
+| 6,4 s | "Esperamos você!" aparece em fade |
+| 7–14,3 s | Composição completa com ambiente vivo: dinossauros mexendo a cabeça, pterossauro batendo as asas, folhas, névoa, cachoeira e parallax de câmera |
+| 14,3–15 s | Tudo se acomoda; o último quadro é idêntico à arte original |

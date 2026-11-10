@@ -129,47 +129,43 @@
   gsap.set(L.sign2.anim, { transformOrigin: '50% 50%' });
   gsap.set(L.sign3.amb, { transformOrigin: '50% 0%' });
 
-  // ───────────── Master timeline (all entrances) ─────────────
-  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.inOut' } });
-  // Scene 1 — 0–3s: forest wakes, logo descends
-  tl.fromTo(cam, { scale: 1.06 }, { scale: 1, duration: 12, ease: 'sine.inOut' }, 0);
-  tl.fromTo(L.mistFront.el, { opacity: 0.92 }, { opacity: 0, duration: 3.2, ease: 'sine.inOut' }, 1.4);
-  tl.fromTo(L.mistBack.el, { opacity: 0.55 }, { opacity: 0.32, duration: 4, ease: 'sine.inOut' }, 0);
-  tl.fromTo(L.mistMid.el, { opacity: 0.7 }, { opacity: 0.38, duration: 5, ease: 'sine.inOut' }, 0);
-  tl.fromTo(L.haze.el, { opacity: 1 }, { opacity: 0.55, duration: 5, ease: 'sine.inOut' }, 0);
-  tl.fromTo('#streaks', { opacity: 0 }, { opacity: 0.38, duration: 2, ease: 'sine.inOut' }, 0.2);
-  tl.fromTo(L.logo.anim, { y: -470, scale: 0.86 },
-    { y: 0, scale: 1, duration: 2.3, ease: 'power3.out' }, 0.6);
-  tl.fromTo(L.logo.anim, { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'sine.out' }, 0.6);
+  // ───────────── Master timeline (all entrances) — fast, punchy pacing ─────────────
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+  // Scene 1 — 0–1.6s: forest wakes, logo drops in
+  tl.fromTo(cam, { scale: 1.08 }, { scale: 1, duration: 7.5, ease: 'power2.inOut' }, 0);
+  tl.fromTo(L.mistFront.el, { opacity: 0.9 }, { opacity: 0, duration: 1.4, ease: 'sine.inOut' }, 0.15);
+  tl.fromTo(L.mistBack.el, { opacity: 0.55 }, { opacity: 0.3, duration: 2, ease: 'sine.inOut' }, 0);
+  tl.fromTo(L.mistMid.el, { opacity: 0.7 }, { opacity: 0.38, duration: 2.5, ease: 'sine.inOut' }, 0);
+  tl.fromTo(L.haze.el, { opacity: 1 }, { opacity: 0.55, duration: 2.5, ease: 'sine.inOut' }, 0);
+  tl.fromTo('#streaks', { opacity: 0 }, { opacity: 0.4, duration: 1, ease: 'sine.inOut' }, 0.1);
+  tl.fromTo(L.logo.anim, { y: -460, scale: 0.7 }, { y: 0, scale: 1, duration: 0.9, ease: 'back.out(1.5)' }, 0.35);
+  tl.fromTo(L.logo.anim, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'sine.out' }, 0.35);
 
-  // Scene 2 — 3–5s: dinosaurs
-  tl.fromTo(L.trex.anim, { x: 300, opacity: 0, rotation: 3 },
-    { x: 0, opacity: 1, rotation: 0, duration: 1.9, ease: 'power3.out' }, 3.0);
-  tl.fromTo(L.brachio.anim, { x: -260, opacity: 0, rotation: -4 },
-    { x: 0, opacity: 1, rotation: 0, duration: 2.0, ease: 'power3.out' }, 3.2);
-  tl.fromTo(L.trice.anim, { x: 200, y: -50, opacity: 0, rotation: 2.5 },
-    { x: 0, y: 0, opacity: 1, rotation: 0, duration: 1.8, ease: 'power3.out' }, 3.45);
-  tl.fromTo(L.ptero.anim, { x: -380, y: 60, opacity: 0, rotation: -8 },
-    { x: 0, y: 0, opacity: 1, rotation: 0, duration: 1.9, ease: 'power2.out' }, 3.3);
+  // Scene 2 — 1.3–2.8s: dinosaurs burst in from the sides
+  tl.fromTo(L.trex.anim, { x: 340, opacity: 0, rotation: 5 }, { x: 0, opacity: 1, rotation: 0, duration: 0.85, ease: 'back.out(1.3)' }, 1.3);
+  tl.fromTo(L.brachio.anim, { x: -300, opacity: 0, rotation: -6 }, { x: 0, opacity: 1, rotation: 0, duration: 0.9, ease: 'back.out(1.3)' }, 1.5);
+  tl.fromTo(L.trice.anim, { x: 240, y: -60, opacity: 0, rotation: 4 }, { x: 0, y: 0, opacity: 1, rotation: 0, duration: 0.85, ease: 'back.out(1.3)' }, 1.7);
+  tl.fromTo(L.ptero.anim, { x: -400, y: 80, opacity: 0, rotation: -12 }, { x: 0, y: 0, opacity: 1, rotation: 0, duration: 1.0, ease: 'power3.out' }, 1.6);
 
-  // Scene 3 — 5–7s: invitation plank drops (pendulum handled in ambient())
-  tl.fromTo(L.sign1.anim, { y: -210, opacity: 0 }, { y: 0, duration: 1.5, ease: 'power3.out' }, 5.0);
-  tl.to(L.sign1.anim, { opacity: 1, duration: 0.6, ease: 'sine.out' }, 5.0);
+  // Scene 3 — 2.9s: invitation plank drops from behind the logo and swings
+  tl.fromTo(L.sign1.anim, { y: -220, opacity: 0 }, { y: 0, duration: 0.75, ease: 'back.out(1.6)' }, 2.9);
+  tl.to(L.sign1.anim, { opacity: 1, duration: 0.25, ease: 'sine.out' }, 2.9);
 
-  // Scene 4 — 7–10s: date & time
-  tl.fromTo(L.sign2.anim, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.4, ease: 'power3.out' }, 7.0);
-  tl.fromTo(L.sign3.anim, { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 1.3, ease: 'power3.out' }, 8.3);
+  // Scene 4 — 3.8–4.9s: date pops, time rises
+  tl.fromTo(L.sign2.anim, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(2)' }, 3.8);
+  tl.fromTo(L.sign3.anim, { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'back.out(1.6)' }, 4.4);
 
-  // Scene 5 — 10–12s: address + picnic foreground
-  tl.fromTo(L.sign4.anim, { y: 170, opacity: 0 }, { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out' }, 10.0);
-  tl.fromTo(L.picnicL.anim, { x: -45, y: 30, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 1.5, ease: 'power2.out' }, 10.4);
-  tl.fromTo(L.eggs.anim, { x: 45, y: 30, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 1.5, ease: 'power2.out' }, 10.6);
+  // Scene 5 — 5.1–6.2s: address + picnic foreground
+  tl.fromTo(L.sign4.anim, { y: 180, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'back.out(1.4)' }, 5.1);
+  tl.fromTo(L.picnicL.anim, { x: -70, y: 40, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.65, ease: 'power3.out' }, 5.5);
+  tl.fromTo(L.eggs.anim, { x: 70, y: 40, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.65, ease: 'power3.out' }, 5.65);
 
-  // Scene 6 — 12–15s: final message, atmosphere settles to the exact original
-  tl.fromTo(L.stone.anim, { opacity: 0 }, { opacity: 1, duration: 1.3, ease: 'sine.inOut' }, 12.0);
-  tl.to([L.mistBack.el, L.mistMid.el], { opacity: 0, duration: 2.2, ease: 'sine.inOut' }, 11.8);
-  tl.to(L.haze.el, { opacity: 0, duration: 3.5, ease: 'sine.inOut' }, 9.5);
-  tl.to('#streaks', { opacity: 0, duration: 1.2, ease: 'sine.inOut' }, 13.4);
+  // Scene 6 — 6.4s+: final message, lively ambience, then settles to the exact original
+  tl.fromTo(L.stone.anim, { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'sine.inOut' }, 6.4);
+  tl.to([L.mistBack.el, L.mistMid.el], { opacity: 0.12, duration: 1.5, ease: 'sine.inOut' }, 6.0);
+  tl.to([L.mistBack.el, L.mistMid.el], { opacity: 0, duration: 1.0, ease: 'sine.inOut' }, 13.2);
+  tl.to(L.haze.el, { opacity: 0, duration: 1.8, ease: 'sine.inOut' }, 4.6);
+  tl.to('#streaks', { opacity: 0, duration: 1.0, ease: 'sine.inOut' }, 13.4);
   tl.fromTo('#final', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'none' }, 14.3); // guarantees last frame == original
   tl.set({}, {}, DURATION);
 
@@ -184,35 +180,35 @@
   function ambient(t) {
     const T = tail(t);
     // camera parallax drift (−14px → 0) plus a tiny late float, all layers by depth
-    const camX = -14 * (1 - smooth(0, 12, t)) + 3 * Math.sin(TAU * 0.12 * t) * smooth(11.5, 12.5, t) * T;
-    const camY = -6 * (1 - smooth(0, 12, t));
+    const camX = -16 * (1 - smooth(0, 7.5, t)) + 5 * Math.sin(TAU * 0.2 * (t - 7)) * smooth(7, 8, t) * T;
+    const camY = -6 * (1 - smooth(0, 7.5, t)) + 2 * Math.sin(TAU * 0.15 * (t - 7)) * smooth(7, 8, t) * T;
     for (const k in L) { const o = L[k]; const d = o.depth - 0.25;
       gsap.set(o.par === o.el ? o.el : o.par, { x: camX * d, y: camY * d, force3D: true }); }
     // foliage breeze (displacement oscillates around zero)
     const ws = s => s * T;
-    disp.foliageTL.setAttribute('scale', ws(7 * Math.sin(TAU * 0.33 * t)).toFixed(3));
-    disp.foliageTR.setAttribute('scale', ws(7 * Math.sin(TAU * 0.29 * t + 1.3)).toFixed(3));
-    disp.foliageBL.setAttribute('scale', ws(6 * Math.sin(TAU * 0.37 * t + 2.1)).toFixed(3));
-    disp.foliageBR.setAttribute('scale', ws(6 * Math.sin(TAU * 0.31 * t + 0.4)).toFixed(3));
+    disp.foliageTL.setAttribute('scale', ws(10 * Math.sin(TAU * 0.5 * t)).toFixed(3));
+    disp.foliageTR.setAttribute('scale', ws(10 * Math.sin(TAU * 0.45 * t + 1.3)).toFixed(3));
+    disp.foliageBL.setAttribute('scale', ws(9 * Math.sin(TAU * 0.55 * t + 2.1)).toFixed(3));
+    disp.foliageBR.setAttribute('scale', ws(9 * Math.sin(TAU * 0.48 * t + 0.4)).toFixed(3));
     disp.waterfall.setAttribute('scale', ws(4 * Math.sin(TAU * 1.7 * t)).toFixed(3));
     document.getElementById('streaks').style.backgroundPosition = `0px ${(t * 140) % 600}px`;
     // mist drift
-    L.mistBack.el.style.backgroundPosition = `${(t * 9) % 2244}px 0px`;
-    L.mistMid.el.style.backgroundPosition = `${-(t * 15) % 2244}px 30px`;
-    L.mistFront.el.style.backgroundPosition = `${(t * 24) % 2244}px -60px`;
+    L.mistBack.el.style.backgroundPosition = `${(t * 18) % 2244}px 0px`;
+    L.mistMid.el.style.backgroundPosition = `${-(t * 28) % 2244}px 30px`;
+    L.mistFront.el.style.backgroundPosition = `${(t * 45) % 2244}px -60px`;
     // dinosaurs — subtle head/body motion once they have arrived
-    const tr = smooth(4.4, 5.6, t) * T, br = smooth(4.6, 5.8, t) * T, ce = smooth(4.8, 6.0, t) * T, pt = smooth(4.6, 5.6, t) * T;
-    gsap.set(L.trex.amb, { rotation: 0.9 * Math.sin(TAU * 0.21 * (t - 4.4)) * tr, scaleY: 1 + 0.006 * Math.sin(TAU * 0.34 * t) * tr });
-    gsap.set(L.brachio.amb, { rotation: -0.9 * Math.sin(TAU * 0.17 * (t - 4.6)) * br });
-    gsap.set(L.trice.amb, { rotation: 0.7 * Math.sin(TAU * 0.19 * (t - 4.8)) * ce });
+    const tr = smooth(2.0, 2.6, t) * T, br = smooth(2.3, 2.9, t) * T, ce = smooth(2.4, 3.0, t) * T, pt = smooth(2.4, 3.0, t) * T;
+    gsap.set(L.trex.amb, { rotation: 1.6 * Math.sin(TAU * 0.4 * (t - 2.0)) * tr, scaleY: 1 + 0.01 * Math.sin(TAU * 0.6 * t) * tr });
+    gsap.set(L.brachio.amb, { rotation: -1.5 * Math.sin(TAU * 0.32 * (t - 2.3)) * br });
+    gsap.set(L.trice.amb, { rotation: 1.2 * Math.sin(TAU * 0.36 * (t - 2.4)) * ce });
     // pterosaur: wing beats while flying in, then a gentle hover
-    const flapIn = 1 - smooth(4.6, 5.4, t);
-    const flapAmt = t < 3.3 ? 0 : 0.07 * flapIn + 0.022 * pt;
-    const flapPhase = t < 5 ? TAU * 1.8 * t : TAU * 1.8 * 5 + TAU * 0.8 * (t - 5);   // fast beats in flight, slow glide after
-    gsap.set(L.ptero.amb, { scaleY: 1 - flapAmt * (0.5 + 0.5 * Math.sin(flapPhase)), y: 4 * Math.sin(TAU * 0.3 * (t - 4.6)) * pt });
+    const flapIn = 1 - smooth(2.4, 3.0, t);
+    const flapAmt = t < 1.6 ? 0 : 0.08 * flapIn + 0.04 * pt;
+    const flapPhase = TAU * 2.2 * t;   // continuous wing beats
+    gsap.set(L.ptero.amb, { scaleY: 1 - flapAmt * (0.5 + 0.5 * Math.sin(flapPhase)), y: 8 * Math.sin(TAU * 0.45 * (t - 2.4)) * pt, x: 5 * Math.sin(TAU * 0.25 * (t - 2.4)) * pt });
     // hanging planks: damped pendulum (settles long before the end)
-    gsap.set(L.sign1.amb, { rotation: pend(t - 5.0, 2.4, 0.55, 0.95) });
-    gsap.set(L.sign3.amb, { rotation: pend(t - 8.3, 1.1, 0.7, 1.3) });
+    gsap.set(L.sign1.amb, { rotation: pend(t - 2.9, 3.0, 0.9, 0.9) });
+    gsap.set(L.sign3.amb, { rotation: pend(t - 4.4, 1.6, 1.1, 1.2) });
   }
 
   // ───────────── Rendering / playback ─────────────
