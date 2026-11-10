@@ -58,12 +58,21 @@ Gerada 100% por síntese em `tools/make_audio.py` (sem samples nem músicas de t
 Para regerar a trilha e o vídeo com som: `python3 tools/make_audio.py && node export/render.mjs`.
 Na prévia (`index.html`), clique em **🔇 Som** para ativar o áudio sincronizado.
 
-## Vídeo 2 — convite "5 anos" ajustado
+## Vídeo 2 — convite "5 anos" ajustado em alta qualidade
 
-`output/video2/convite-vicente-5anos-ajustado.mp4`: versão corrigida do vídeo enviado (`assets/video2/original.mp4`), 1080×1920, 30 fps, 12,4 s, com trilha.
+`output/video2/convite-vicente-5anos-HD-1080x1920.mp4`: versão corrigida e restaurada do vídeo enviado (`assets/video2/original.mp4`), 1080×1920, 30 fps, 12,4 s, com trilha.
 
-- **Problemas no original**: um trecho de 1,4 s repetido 7 vezes, com um "pulo" a cada emenda, quadros duplicados (engasgos), 720×1280 e codec HEVC.
-- **Correção**: um só ciclo, sem duplicados, em ida e volta (loop sem emenda), interpolação de movimento para 30 fps, ampliação para Full HD com leve nitidez e cor, e H.264 + AAC (compatível com WhatsApp e Instagram).
-- **Trilha** (`assets/audio/soundtrack-video2.wav`): a mesma música de aventura com efeitos de rugidos, Triceratops, pterossauro, pescoço-longo, passos pesados, raptor e brilho final.
+- **Problemas no original**: imagem borrada e com artefatos de compressão (720×1280, HEVC com bitrate baixo), um trecho de 1,4 s repetido 7 vezes com um "pulo" a cada emenda, e quadros duplicados (engasgos).
+- **Alta qualidade**: super-resolução com IA (**Real-ESRGAN** `realesr-general-x4v3`, licença BSD-3) aplicada em cada quadro único: ×4 (2880×5120), reduzido com Lanczos para 1080×1920 e uma leve máscara de nitidez. Reconstrói as bordas, limpa os blocos de compressão e deixa os textos nítidos.
+- **Movimento**: um só ciclo, sem duplicados, em ida e volta (loop sem emenda) e interpolação de movimento para 30 fps.
+- **Arquivo**: H.264 High (CRF 14) + AAC 256 kbps, compatível com WhatsApp, Instagram e qualquer celular.
+- **Trilha** (`assets/audio/soundtrack-video2.wav`): música de aventura sintetizada com rugidos, Triceratops, pterossauro, pescoço-longo, passos pesados, raptor e brilho final.
 
-Para regerar: `python3 tools/make_audio.py video2 && python3 tools/adjust_video2.py`.
+Para regerar (precisa de PyTorch; roda em CPU, cerca de 12 s por quadro):
+
+```bash
+curl -LO https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth
+python3 tools/make_audio.py video2
+python3 tools/adjust_video2.py --model realesr-general-x4v3.pth            # 1080x1920
+python3 tools/adjust_video2.py --model realesr-general-x4v3.pth --height 3840   # 2160x3840 (4K)
+```
